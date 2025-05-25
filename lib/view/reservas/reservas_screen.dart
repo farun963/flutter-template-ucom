@@ -12,7 +12,15 @@ class ReservaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Reservar lugar")),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text(
+          "Reservar lugar",
+          style: TextStyle(color: Colors.greenAccent),
+        ),
+        iconTheme: const IconThemeData(color: Colors.greenAccent),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -21,36 +29,56 @@ class ReservaScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text("Seleccionar auto",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent)),
                 Obx(() {
                   return DropdownButton<Auto>(
                     isExpanded: true,
+                    dropdownColor: Colors.black,
+                    style: const TextStyle(color: Colors.greenAccent),
                     value: controller.autoSeleccionado.value,
-                    hint: const Text("Seleccionar auto"),
+                    hint: const Text("Seleccionar auto",
+                        style: TextStyle(color: Colors.green)),
                     onChanged: (auto) {
                       controller.autoSeleccionado.value = auto;
                     },
                     items: controller.autosCliente.map((a) {
                       final nombre = "${a.chapa} - ${a.marca} ${a.modelo}";
-                      return DropdownMenuItem(value: a, child: Text(nombre));
+                      return DropdownMenuItem(
+                          value: a,
+                          child: Text(nombre,
+                              style:
+                                  const TextStyle(color: Colors.greenAccent)));
                     }).toList(),
                   );
                 }),
+                const SizedBox(height: 12),
                 const Text("Seleccionar piso",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent)),
                 DropdownButton<Piso>(
                   isExpanded: true,
+                  dropdownColor: Colors.black,
+                  style: const TextStyle(color: Colors.greenAccent),
                   value: controller.pisoSeleccionado.value,
-                  hint: const Text("Seleccionar piso"),
+                  hint: const Text("Seleccionar piso",
+                      style: TextStyle(color: Colors.green)),
                   onChanged: (p) => controller.seleccionarPiso(p!),
                   items: controller.pisos
                       .map((p) => DropdownMenuItem(
-                          value: p, child: Text(p.descripcion)))
+                          value: p,
+                          child: Text(p.descripcion,
+                              style:
+                                  const TextStyle(color: Colors.greenAccent))))
                       .toList(),
                 ),
                 const SizedBox(height: 16),
                 const Text("Seleccionar lugar",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent)),
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 200,
@@ -68,8 +96,8 @@ class ReservaScreen extends StatelessWidget {
                       final color = lugar.estado == "RESERVADO"
                           ? Colors.red
                           : seleccionado
-                              ? Colors.green
-                              : Colors.grey.shade300;
+                              ? Colors.greenAccent.shade400
+                              : Colors.grey.shade800;
 
                       return GestureDetector(
                         onTap: lugar.estado == "DISPONIBLE"
@@ -81,17 +109,17 @@ class ReservaScreen extends StatelessWidget {
                             color: color,
                             border: Border.all(
                                 color: seleccionado
-                                    ? Colors.green.shade700
-                                    : Colors.black12),
+                                    ? Colors.green
+                                    : Colors.green.shade900),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             lugar.codigoLugar,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: lugar.estado == "reservado"
+                              color: lugar.estado == "RESERVADO"
                                   ? Colors.white
-                                  : Colors.black87,
+                                  : Colors.black,
                             ),
                           ),
                         ),
@@ -101,12 +129,18 @@ class ReservaScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text("Seleccionar horarios",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.greenAccent.shade400,
+                          foregroundColor: Colors.black,
+                        ),
                         onPressed: () async {
                           final date = await showDatePicker(
                             context: context,
@@ -140,6 +174,10 @@ class ReservaScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.greenAccent.shade400,
+                          foregroundColor: Colors.black,
+                        ),
                         onPressed: () async {
                           final date = await showDatePicker(
                             context: context,
@@ -175,7 +213,9 @@ class ReservaScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 const Text("Duración rápida",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -183,9 +223,11 @@ class ReservaScreen extends StatelessWidget {
                     final seleccionada =
                         controller.duracionSeleccionada.value == horas;
                     return ChoiceChip(
-                      label: Text("$horas h"),
+                      label: Text("$horas h",
+                          style: const TextStyle(color: Colors.black)),
                       selected: seleccionada,
-                      selectedColor: Theme.of(context).colorScheme.primary,
+                      selectedColor: Colors.greenAccent.shade400,
+                      backgroundColor: Colors.grey.shade800,
                       onSelected: (_) {
                         controller.duracionSeleccionada.value = horas;
                         final inicio =
@@ -211,7 +253,9 @@ class ReservaScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
                     child: Text(
                       "Monto estimado: ₲${UtilesApp.formatearGuaranies(monto)}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.greenAccent),
                     ),
                   );
                 }),
@@ -220,8 +264,8 @@ class ReservaScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.greenAccent,
+                      foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -235,12 +279,11 @@ class ReservaScreen extends StatelessWidget {
                           "Reserva",
                           "Reserva realizada con éxito",
                           snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.black,
+                          colorText: Colors.greenAccent,
                         );
-
-                        // Esperá un poco para que el snackbar se muestre
                         await Future.delayed(
                             const Duration(milliseconds: 2000));
-
                         Get.back();
                       } else {
                         Get.snackbar(
