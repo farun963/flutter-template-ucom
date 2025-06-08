@@ -4,14 +4,15 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:finpay/config/images.dart';
 import 'package:finpay/config/textstyle.dart';
 import 'package:finpay/controller/home_controller.dart';
-import 'package:finpay/controller/reserva_controller.dart';
-import 'package:finpay/utils/utiles.dart';
 import 'package:finpay/view/home/top_up_screen.dart';
 import 'package:finpay/view/home/transfer_screen.dart';
 import 'package:finpay/view/home/widget/circle_card.dart';
 import 'package:finpay/view/home/widget/custom_card.dart';
 import 'package:finpay/view/home/widget/transaction_list.dart';
-import 'package:finpay/view/reservas/reservas_screen.dart';
+// NUEVOS IMPORTS PARA ESTACIONAMIENTO
+import 'package:finpay/view/reservas/reserva_screen.dart';
+import 'package:finpay/view/reservas/mis_reservas_screen.dart';
+import 'package:finpay/controller/pago_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -19,7 +20,7 @@ import 'package:get/get.dart';
 class HomeView extends StatelessWidget {
   final HomeController homeController;
 
-  const HomeView({Key? key, required this.homeController}) : super(key: key);
+  const HomeView({super.key, required this.homeController});
 
   @override
   Widget build(BuildContext context) {
@@ -190,6 +191,8 @@ class HomeView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // SECCIÓN DE ACCIONES ORIGINALES
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -205,7 +208,7 @@ class HomeView extends StatelessWidget {
                       },
                       child: circleCard(
                         image: DefaultImages.topup,
-                        title: "Pagar",
+                        title: "Top-up",
                       ),
                     ),
                     InkWell(
@@ -225,26 +228,24 @@ class HomeView extends StatelessWidget {
                       hoverColor: Colors.transparent,
                       splashColor: Colors.transparent,
                       onTap: () {
-                        Get.to(
-                          () => ReservaScreen(),
-                          binding: BindingsBuilder(() {
-                            Get.delete<
-                                ReservaController>(); // 🔥 elimina instancia previa
-
-                            Get.create(() => ReservaController());
-                          }),
-                          transition: Transition.downToUp,
-                          duration: const Duration(milliseconds: 500),
-                        );
+                        Get.to(const TransferScreen(),
+                            transition: Transition.downToUp,
+                            duration: const Duration(milliseconds: 500));
                       },
                       child: circleCard(
                         image: DefaultImages.transfer,
-                        title: "Reservar",
+                        title: "Transfer",
                       ),
                     )
                   ],
                 ),
+
+                // *** NUEVA SECCIÓN DE ESTACIONAMIENTO AQUÍ ***
                 const SizedBox(height: 30),
+                _buildEstacionamientoSection(context),
+                const SizedBox(height: 30),
+
+                // SECCIÓN DE TRANSACCIONES ORIGINAL
                 Padding(
                   padding:
                       const EdgeInsets.only(left: 10, right: 10, bottom: 50),
@@ -270,7 +271,7 @@ class HomeView extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "Pagos previos",
+                                "Transactions",
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleLarge!
@@ -279,33 +280,39 @@ class HomeView extends StatelessWidget {
                                       fontWeight: FontWeight.w800,
                                     ),
                               ),
+                              Text(
+                                "See all",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge!
+                                    .copyWith(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: HexColor(
+                                            AppTheme.primaryColorString!)),
+                              ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Obx(() {
-                          return Column(
-                            children: homeController.pagosPrevios.map((pago) {
-                              return Padding(
+                        Column(
+                          children: [
+                            for (var i = 0;
+                                i < homeController.transactionList.length;
+                                i++)
+                              Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
-                                child: ListTile(
-                                  leading: const Icon(Icons.payments_outlined),
-                                  title: Text(
-                                      "Reserva: ${pago.codigoReservaAsociada}"),
-                                  subtitle: Text(
-                                      "Fecha: ${UtilesApp.formatearFechaDdMMAaaa(pago.fechaPago)}"),
-                                  trailing: Text(
-                                    "- ${UtilesApp.formatearGuaranies(pago.montoPagado)}",
-                                    style: TextStyle(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
-                                  ),
+                                child: transactionList(
+                                  homeController.transactionList[i].image,
+                                  homeController.transactionList[i].background,
+                                  homeController.transactionList[i].title,
+                                  homeController.transactionList[i].subTitle,
+                                  homeController.transactionList[i].price,
+                                  homeController.transactionList[i].time,
                                 ),
-                              );
-                            }).toList(),
-                          );
-                        }),
+                              )
+                          ],
+                        )
                       ],
                     ),
                   ),
@@ -315,6 +322,283 @@ class HomeView extends StatelessWidget {
           )
         ],
       ),
+    );
+  }
+
+  // *** NUEVAS FUNCIONES PARA ESTACIONAMIENTO ***
+
+  Widget _buildEstacionamientoSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.isLightTheme == false
+              ? const Color(0xff211F32)
+              : const Color(0xffFFFFFF),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xff000000).withOpacity(0.10),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Estacionamiento",
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      print("Navegando a Mis Reservas");
+                      Get.to(() => MisReservasScreen());
+                    },
+                    child: Text(
+                      "Ver todas",
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: HexColor(AppTheme.primaryColorString!)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Botones de acción
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildActionButton(
+                      context,
+                      "Nueva Reserva",
+                      "Reservar lugar",
+                      Icons.add_location_alt,
+                      HexColor(AppTheme.primaryColorString!),
+                      () {
+                        print("Navegando a Nueva Reserva");
+                        Get.to(() => ReservaScreen());
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildActionButton(
+                      context,
+                      "Mis Reservas",
+                      "Gestionar",
+                      Icons.receipt_long,
+                      Colors.blueAccent,
+                      () {
+                        print("Navegando a Mis Reservas");
+                        Get.to(() => MisReservasScreen());
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Resumen de reservas
+            _buildResumenReservas(context),
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.isLightTheme == false
+              ? const Color(0xff15141F)
+              : const Color(0xffF8F9FA),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: Theme.of(context).textTheme.bodySmall!.color,
+                    fontSize: 12,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResumenReservas(BuildContext context) {
+    try {
+      final pagoController = Get.put(PagoController());
+
+      return Obx(() {
+        final resumen = pagoController.obtenerResumenReservas();
+        final total = resumen.values.fold(0, (sum, value) => sum + value);
+
+        if (total == 0) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.isLightTheme == false
+                    ? const Color(0xff15141F)
+                    : const Color(0xffF8F9FA),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      HexColor(AppTheme.primaryColorString!).withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: HexColor(AppTheme.primaryColorString!),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      "No tenés reservas registradas",
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).textTheme.bodySmall!.color,
+                            fontSize: 14,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.isLightTheme == false
+                  ? const Color(0xff15141F)
+                  : const Color(0xffF8F9FA),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: HexColor(AppTheme.primaryColorString!).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Resumen de Reservas",
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: HexColor(AppTheme.primaryColorString!),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildResumenItem(context, "Pendientes",
+                        resumen['PENDIENTE'] ?? 0, Colors.orange),
+                    _buildResumenItem(context, "Pagadas",
+                        resumen['PAGADA'] ?? 0, Colors.green),
+                    _buildResumenItem(context, "Canceladas",
+                        resumen['CANCELADA'] ?? 0, Colors.red),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      });
+    } catch (e) {
+      print("Error en resumen de reservas: $e");
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          "Error al cargar resumen",
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+    }
+  }
+
+  Widget _buildResumenItem(
+      BuildContext context, String label, int cantidad, Color color) {
+    return Column(
+      children: [
+        Text(
+          cantidad.toString(),
+          style: TextStyle(
+            color: color,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                color: Theme.of(context).textTheme.bodySmall!.color,
+                fontSize: 11,
+              ),
+        ),
+      ],
     );
   }
 }

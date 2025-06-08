@@ -32,47 +32,75 @@ class ReservaScreen extends StatelessWidget {
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.greenAccent)),
-                Obx(() {
-                  return DropdownButton<Auto>(
-                    isExpanded: true,
-                    dropdownColor: Colors.black,
-                    style: const TextStyle(color: Colors.greenAccent),
-                    value: controller.autoSeleccionado.value,
-                    hint: const Text("Seleccionar auto",
-                        style: TextStyle(color: Colors.green)),
-                    onChanged: (auto) {
-                      controller.autoSeleccionado.value = auto;
-                    },
-                    items: controller.autosCliente.map((a) {
-                      final nombre = "${a.chapa} - ${a.marca} ${a.modelo}";
-                      return DropdownMenuItem(
-                          value: a,
-                          child: Text(nombre,
-                              style:
-                                  const TextStyle(color: Colors.greenAccent)));
-                    }).toList(),
-                  );
-                }),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.greenAccent),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey.shade900,
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<Auto>(
+                      isExpanded: true,
+                      dropdownColor: Colors.black,
+                      style: const TextStyle(color: Colors.greenAccent),
+                      value: controller.autoSeleccionado.value,
+                      hint: const Text("Seleccionar auto",
+                          style: TextStyle(color: Colors.green)),
+                      onChanged: (auto) {
+                        controller.autoSeleccionado.value = auto;
+                      },
+                      items: controller.autosCliente.map((a) {
+                        final nombre = "${a.chapa} - ${a.marca} ${a.modelo}";
+                        return DropdownMenuItem(
+                            value: a,
+                            child: Text(nombre,
+                                style: const TextStyle(
+                                    color: Colors.greenAccent)));
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 const Text("Seleccionar piso",
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.greenAccent)),
-                DropdownButton<Piso>(
-                  isExpanded: true,
-                  dropdownColor: Colors.black,
-                  style: const TextStyle(color: Colors.greenAccent),
-                  value: controller.pisoSeleccionado.value,
-                  hint: const Text("Seleccionar piso",
-                      style: TextStyle(color: Colors.green)),
-                  onChanged: (p) => controller.seleccionarPiso(p!),
-                  items: controller.pisos
-                      .map((p) => DropdownMenuItem(
-                          value: p,
-                          child: Text(p.descripcion,
-                              style:
-                                  const TextStyle(color: Colors.greenAccent))))
-                      .toList(),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.greenAccent),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey.shade900,
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      dropdownColor: Colors.black,
+                      style: const TextStyle(color: Colors.greenAccent),
+                      value: controller.pisoSeleccionado.value?.codigo,
+                      hint: const Text("Seleccionar piso",
+                          style: TextStyle(color: Colors.green)),
+                      onChanged: (codigoPiso) {
+                        if (codigoPiso != null) {
+                          final piso = controller.pisos
+                              .firstWhere((p) => p.codigo == codigoPiso);
+                          controller.seleccionarPiso(piso);
+                        }
+                      },
+                      items: controller.pisos
+                          .map((p) => DropdownMenuItem(
+                              value: p.codigo,
+                              child: Text(p.descripcion,
+                                  style: const TextStyle(
+                                      color: Colors.greenAccent))))
+                          .toList(),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Text("Seleccionar lugar",
@@ -82,50 +110,72 @@ class ReservaScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 SizedBox(
                   height: 200,
-                  child: GridView.count(
-                    crossAxisCount: 5,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    children: controller.lugaresDisponibles
+                  child: Obx(() {
+                    final lugaresFiltrados = controller.lugaresDisponibles
                         .where((l) =>
                             l.codigoPiso ==
                             controller.pisoSeleccionado.value?.codigo)
-                        .map((lugar) {
-                      final seleccionado =
-                          lugar == controller.lugarSeleccionado.value;
-                      final color = lugar.estado == "RESERVADO"
-                          ? Colors.red
-                          : seleccionado
-                              ? Colors.greenAccent.shade400
-                              : Colors.grey.shade800;
+                        .toList();
 
-                      return GestureDetector(
-                        onTap: lugar.estado == "DISPONIBLE"
-                            ? () => controller.lugarSeleccionado.value = lugar
-                            : null,
+                    if (lugaresFiltrados.isEmpty) {
+                      return Center(
                         child: Container(
-                          alignment: Alignment.center,
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: color,
-                            border: Border.all(
-                                color: seleccionado
-                                    ? Colors.green
-                                    : Colors.green.shade900),
+                            border: Border.all(color: Colors.greenAccent),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            lugar.codigoLugar,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: lugar.estado == "RESERVADO"
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
+                          child: const Text(
+                            "Selecciona un piso para ver lugares disponibles",
+                            style: TextStyle(color: Colors.greenAccent),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       );
-                    }).toList(),
-                  ),
+                    }
+
+                    return GridView.count(
+                      crossAxisCount: 5,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      children: lugaresFiltrados.map((lugar) {
+                        final seleccionado = lugar.codigoLugar ==
+                            controller.lugarSeleccionado.value?.codigoLugar;
+                        final color = lugar.estado == "RESERVADO"
+                            ? Colors.red
+                            : seleccionado
+                                ? Colors.greenAccent.shade400
+                                : Colors.grey.shade800;
+
+                        return GestureDetector(
+                          onTap: lugar.estado == "DISPONIBLE"
+                              ? () => controller.lugarSeleccionado.value = lugar
+                              : null,
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: color,
+                              border: Border.all(
+                                  color: seleccionado
+                                      ? Colors.green
+                                      : Colors.green.shade900),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              lugar.codigoLugar,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: lugar.estado == "RESERVADO"
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  }),
                 ),
                 const SizedBox(height: 16),
                 const Text("Seleccionar horarios",
@@ -251,11 +301,21 @@ class ReservaScreen extends StatelessWidget {
 
                   return Padding(
                     padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-                    child: Text(
-                      "Monto estimado: ₲${UtilesApp.formatearGuaranies(monto)}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.greenAccent),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.greenAccent),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey.shade900,
+                      ),
+                      child: Text(
+                        "Monto estimado: ₲${UtilesApp.formatearGuaranies(monto)}",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.greenAccent,
+                            fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   );
                 }),
@@ -272,32 +332,53 @@ class ReservaScreen extends StatelessWidget {
                       ),
                     ),
                     onPressed: () async {
+                      // Mostrar loading
+                      Get.dialog(
+                        const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.greenAccent,
+                          ),
+                        ),
+                        barrierDismissible: false,
+                      );
+
                       final confirmada = await controller.confirmarReserva();
+
+                      // Cerrar loading
+                      Get.back();
 
                       if (confirmada) {
                         Get.snackbar(
-                          "Reserva",
-                          "Reserva realizada con éxito",
+                          "✅ Reserva Exitosa",
+                          "Tu reserva se registró correctamente",
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: Colors.black,
                           colorText: Colors.greenAccent,
+                          icon: const Icon(Icons.check_circle,
+                              color: Colors.greenAccent),
                         );
+
+                        // Resetear campos después de exitoso
+                        controller.resetearCampos();
+
                         await Future.delayed(
-                            const Duration(milliseconds: 2000));
+                            const Duration(milliseconds: 1500));
                         Get.back();
                       } else {
                         Get.snackbar(
-                          "Error",
+                          "❌ Error",
                           "Verificá que todos los campos estén completos",
                           snackPosition: SnackPosition.TOP,
-                          backgroundColor: Colors.red.shade100,
-                          colorText: Colors.red.shade900,
+                          backgroundColor: Colors.red.shade700,
+                          colorText: Colors.white,
+                          icon: const Icon(Icons.error, color: Colors.white),
                         );
                       }
                     },
                     child: const Text(
                       "Confirmar Reserva",
-                      style: TextStyle(fontSize: 16),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

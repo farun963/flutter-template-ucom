@@ -90,20 +90,20 @@ class Lugar {
   String codigoPiso;
   String codigoLugar;
   String descripcionLugar;
-  String estado; // disponible, reservado, ocupado
+  String estado; // DISPONIBLE, RESERVADO, OCUPADO
 
   Lugar({
     required this.codigoPiso,
     required this.codigoLugar,
     required this.descripcionLugar,
-    this.estado = "disponible",
+    this.estado = "DISPONIBLE",
   });
 
   factory Lugar.fromJson(Map<String, dynamic> json) => Lugar(
         codigoPiso: json['codigoPiso'],
         codigoLugar: json['codigoLugar'],
         descripcionLugar: json['descripcionLugar'],
-        estado: json['estado'] ?? "disponible",
+        estado: json['estado'] ?? "DISPONIBLE",
       );
 
   Map<String, dynamic> toJson() => {
@@ -119,8 +119,9 @@ class Reserva {
   DateTime horarioInicio;
   DateTime horarioSalida;
   double monto;
-  String estadoReserva;
+  String estadoReserva; // PENDIENTE, PAGADA, CANCELADA
   String chapaAuto; // solo la chapa
+  String? codigoLugar; // Agregado para relacionar con el lugar reservado
 
   Reserva({
     required this.codigoReserva,
@@ -129,6 +130,7 @@ class Reserva {
     required this.monto,
     required this.estadoReserva,
     required this.chapaAuto,
+    this.codigoLugar,
   });
 
   factory Reserva.fromJson(Map<String, dynamic> json) => Reserva(
@@ -138,6 +140,7 @@ class Reserva {
         monto: json['monto'].toDouble(),
         estadoReserva: json['estadoReserva'],
         chapaAuto: json['chapaAuto'] ?? '',
+        codigoLugar: json['codigoLugar'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -147,6 +150,7 @@ class Reserva {
         'monto': monto,
         'estadoReserva': estadoReserva,
         'chapaAuto': chapaAuto,
+        'codigoLugar': codigoLugar,
       };
 }
 
@@ -155,12 +159,16 @@ class Pago {
   String codigoReservaAsociada;
   double montoPagado;
   DateTime fechaPago;
+  String metodoPago; // Agregado para registrar método de pago
+  String estado; // COMPLETADO, PENDIENTE, FALLIDO
 
   Pago({
     required this.codigoPago,
     required this.codigoReservaAsociada,
     required this.montoPagado,
     required this.fechaPago,
+    this.metodoPago = "EFECTIVO",
+    this.estado = "COMPLETADO",
   });
 
   factory Pago.fromJson(Map<String, dynamic> json) => Pago(
@@ -168,6 +176,8 @@ class Pago {
         codigoReservaAsociada: json['codigoReservaAsociada'],
         montoPagado: json['montoPagado'].toDouble(),
         fechaPago: DateTime.parse(json['fechaPago']),
+        metodoPago: json['metodoPago'] ?? "EFECTIVO",
+        estado: json['estado'] ?? "COMPLETADO",
       );
 
   Map<String, dynamic> toJson() => {
@@ -175,5 +185,7 @@ class Pago {
         'codigoReservaAsociada': codigoReservaAsociada,
         'montoPagado': montoPagado,
         'fechaPago': fechaPago.toIso8601String(),
+        'metodoPago': metodoPago,
+        'estado': estado,
       };
 }

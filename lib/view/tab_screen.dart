@@ -8,12 +8,14 @@ import 'package:finpay/view/card/card_view.dart';
 import 'package:finpay/view/home/home_view.dart';
 import 'package:finpay/view/profile/profile_view.dart';
 import 'package:finpay/view/statistics/statistics_view.dart';
+// Solo un import para ReservaScreen
+import 'package:finpay/view/reservas/reserva_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class TabScreen extends StatefulWidget {
-  const TabScreen({Key? key}) : super(key: key);
+  const TabScreen({super.key});
 
   @override
   State<TabScreen> createState() => _TabScreenState();
@@ -22,6 +24,7 @@ class TabScreen extends StatefulWidget {
 class _TabScreenState extends State<TabScreen> {
   final tabController = Get.put(TabScreenController());
   final homeController = Get.put(HomeController());
+
   @override
   void initState() {
     tabController.customInit();
@@ -40,14 +43,21 @@ class _TabScreenState extends State<TabScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // FloatingActionButton para nueva reserva
       floatingActionButton: FloatingActionButton(
         backgroundColor: HexColor(AppTheme.primaryColorString!),
-        onPressed: () {},
-        child: SvgPicture.asset(
-          DefaultImages.scan,
+        onPressed: () {
+          // Navegación a nueva reserva
+          Get.to(() => ReservaScreen());
+        },
+        child: const Icon(
+          Icons.add_location_alt,
+          color: Colors.white,
+          size: 24,
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+
       bottomNavigationBar: BottomNavigationBar(
         elevation: 20,
         currentIndex: tabController.pageIndex.value,
@@ -128,173 +138,8 @@ class _TabScreenState extends State<TabScreen> {
               ),
               label: "profile"),
         ],
-
-        // height: 60,
-        // selectedIndex: _currentIndex,
-        // onDestinationSelected: (_currentIndex) => setState(() {
-        //   this._currentIndex = _currentIndex;
-        //   setState(() {
-        //     tabController.pageIndex.value = _currentIndex;
-        //   });
-        // }),
-        // backgroundColor: AppTheme.isLightTheme == false
-        //     ? HexColor('#15141f')
-        //     : Theme.of(context).appBarTheme.backgroundColor,
-
-        // // ignore: prefer_const_literals_to_create_immutables
-        // destinations: [
-        //   NavigationDestination(
-        //     icon: SizedBox(
-        //       height: 20,
-        //       width: 20,
-        //       child: SvgPicture.asset(
-        //         DefaultImages.homr,
-        //         color: tabController.pageIndex.value == 0
-        //             ? HexColor(AppTheme.primaryColorString!)
-        //             : AppTheme.isLightTheme == false
-        //                 ? const Color(0xffA2A0A8)
-        //                 : HexColor(AppTheme.primaryColorString!)
-        //                     .withOpacity(0.4),
-        //       ),
-        //     ),
-        //     label: "Home",
-        //   ),
-        //   NavigationDestination(
-        //       icon: SizedBox(
-        //         height: 20,
-        //         width: 20,
-        //         child: SvgPicture.asset(
-        //           DefaultImages.chart,
-        //           color: tabController.pageIndex.value == 1
-        //               ? HexColor(AppTheme.primaryColorString!)
-        //               : AppTheme.isLightTheme == false
-        //                   ? const Color(0xffA2A0A8)
-        //                   : HexColor(AppTheme.primaryColorString!)
-        //                       .withOpacity(0.4),
-        //         ),
-        //       ),
-        //       label: "Statistics"),
-        //   NavigationDestination(
-        //       icon: SizedBox(
-        //         height: 20,
-        //         width: 20,
-        //         child: SvgPicture.asset(
-        //           DefaultImages.card,
-        //           color: tabController.pageIndex.value == 2
-        //               ? HexColor(AppTheme.primaryColorString!)
-        //               : AppTheme.isLightTheme == false
-        //                   ? const Color(0xffA2A0A8)
-        //                   : HexColor(AppTheme.primaryColorString!)
-        //                       .withOpacity(0.4),
-        //         ),
-        //       ),
-        //       label: "Card"),
-        //   NavigationDestination(
-        //       icon: SizedBox(
-        //         height: 20,
-        //         width: 20,
-        //         child: SvgPicture.asset(
-        //           DefaultImages.user,
-        //           color: tabController.pageIndex.value == 3
-        //               ? HexColor(AppTheme.primaryColorString!)
-        //               : AppTheme.isLightTheme == false
-        //                   ? const Color(0xffA2A0A8)
-        //                   : HexColor(AppTheme.primaryColorString!)
-        //                       .withOpacity(0.4),
-        //         ),
-        //       ),
-        //       label: "Profile"),
-        // ],
       ),
-      // body: _widgetOptions.elementAt(_currentIndex),,
-      // BottomAppBar(
-      //   clipBehavior: Clip.antiAlias,
-      //   shape: const CircularNotchedRectangle(),
-      //   elevation: 10,
-      //   child: SizedBox(
-      //     height: 55,
-      //     child: BottomNavigationBar(
-      //       currentIndex: tabController.pageIndex.value,
-      //       onTap: (index) {
-      //         setState(() {
-      //           tabController.pageIndex.value = index;
-      //         });
-      //       },
-      //       backgroundColor: AppTheme.isLightTheme == false
-      //           ? HexColor('#15141f')
-      //           : Theme.of(context).appBarTheme.backgroundColor,
-      //       type: BottomNavigationBarType.fixed,
-      //       unselectedItemColor: AppTheme.isLightTheme == false
-      //           ? const Color(0xffA2A0A8)
-      //           : HexColor(AppTheme.primaryColorString!).withOpacity(0.4),
-      //       selectedItemColor: HexColor(AppTheme.primaryColorString!),
-      //       items: [
-      //         BottomNavigationBarItem(
-      //           icon: SizedBox(
-      //             height: 20,
-      //             width: 20,
-      //             child: SvgPicture.asset(
-      //               DefaultImages.homr,
-      //               color: tabController.pageIndex.value == 0
-      //                   ? HexColor(AppTheme.primaryColorString!)
-      //                   : AppTheme.isLightTheme == false
-      //                       ? const Color(0xffA2A0A8)
-      //                       : HexColor(AppTheme.primaryColorString!)
-      //                           .withOpacity(0.4),
-      //             ),
-      //           ),
-      //           label: "home",
-      //         ),
-      //         BottomNavigationBarItem(
-      //           icon: SizedBox(
-      //             height: 20,
-      //             width: 20,
-      //             child: SvgPicture.asset(
-      //               DefaultImages.chart,
-      //               color: tabController.pageIndex.value == 1
-      //                   ? HexColor(AppTheme.primaryColorString!)
-      //                   : AppTheme.isLightTheme == false
-      //                       ? const Color(0xffA2A0A8)
-      //                       : HexColor(AppTheme.primaryColorString!)
-      //                           .withOpacity(0.4),
-      //             ),
-      //           ),
-      //           label: "Statistics",
-      //         ),
-      //         BottomNavigationBarItem(
-      //             icon: SizedBox(
-      //               height: 20,
-      //               width: 20,
-      //               child: SvgPicture.asset(
-      //                 DefaultImages.card,
-      //                 color: tabController.pageIndex.value == 2
-      //                     ? HexColor(AppTheme.primaryColorString!)
-      //                     : AppTheme.isLightTheme == false
-      //                         ? const Color(0xffA2A0A8)
-      //                         : HexColor(AppTheme.primaryColorString!)
-      //                             .withOpacity(0.4),
-      //               ),
-      //             ),
-      //             label: "Card"),
-      //         BottomNavigationBarItem(
-      //             icon: SizedBox(
-      //               height: 20,
-      //               width: 20,
-      //               child: SvgPicture.asset(
-      //                 DefaultImages.user,
-      //                 color: tabController.pageIndex.value == 3
-      //                     ? HexColor(AppTheme.primaryColorString!)
-      //                     : AppTheme.isLightTheme == false
-      //                         ? const Color(0xffA2A0A8)
-      //                         : HexColor(AppTheme.primaryColorString!)
-      //                             .withOpacity(0.4),
-      //               ),
-      //             ),
-      //             label: "profile"),
-      //       ],
-      //     ),
-      //   ),
-      // ),
+
       body: GetX<TabScreenController>(
         init: tabController,
         builder: (tabController) => tabController.pageIndex.value == 0

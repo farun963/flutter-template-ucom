@@ -13,50 +13,69 @@ class ReservaController extends GetxController {
   final db = LocalDBService();
   RxList<Auto> autosCliente = <Auto>[].obs;
   Rx<Auto?> autoSeleccionado = Rx<Auto?>(null);
-  String codigoClienteActual =
-      'cliente_1'; // ← este puede venir de login o contexto
+  String codigoClienteActual = 'cliente_1';
+
   @override
   void onInit() {
     super.onInit();
     resetearCampos();
-    cargarAutosDelCliente();
-    cargarPisosYLugares();
+    cargarDatos();
+  }
+
+  Future<void> cargarDatos() async {
+    try {
+      await cargarAutosDelCliente();
+      await cargarPisosYLugares();
+    } catch (e) {
+      print("Error al cargar datos: $e");
+    }
   }
 
   Future<void> cargarPisosYLugares() async {
-    final rawPisos = await db.getAll("pisos.json");
-    final rawLugares = await db.getAll("lugares.json");
-    final rawReservas = await db.getAll("reservas.json");
+    try {
+      final rawPisos = await db.getAll("pisos.json");
+      final rawLugares = await db.getAll("lugares.json");
 
-    final reservas = rawReservas.map((e) => Reserva.fromJson(e)).toList();
-    final lugaresReservados = reservas.map((r) => r.codigoReserva).toSet();
+      print("Pisos cargados: ${rawPisos.length}");
+      print("Lugares cargados: ${rawLugares.length}");
 
-    final todosLugares = rawLugares.map((e) => Lugar.fromJson(e)).toList();
+      final todosLugares = rawLugares.map((e) => Lugar.fromJson(e)).toList();
 
-    // Unir pisos con sus lugares correspondientes
-    pisos.value = rawPisos.map((pJson) {
-      final codigoPiso = pJson['codigo'];
-      final lugaresDelPiso =
-          todosLugares.where((l) => l.codigoPiso == codigoPiso).toList();
+      // Crear pisos únicos
+      final pisosUnicos = <String, Map<String, dynamic>>{};
+      for (var pJson in rawPisos) {
+        pisosUnicos[pJson['codigo']] = pJson;
+      }
 
-      return Piso(
-        codigo: codigoPiso,
-        descripcion: pJson['descripcion'],
-        lugares: lugaresDelPiso,
-      );
-    }).toList();
+      pisos.value = pisosUnicos.values.map((pJson) {
+        final codigoPiso = pJson['codigo'];
+        final lugaresDelPiso =
+            todosLugares.where((l) => l.codigoPiso == codigoPiso).toList();
 
-    // Inicializar lugares disponibles (solo los no reservados)
-    lugaresDisponibles.value = todosLugares.where((l) {
-      return !lugaresReservados.contains(l.codigoLugar);
-    }).toList();
+        return Piso(
+          codigo: codigoPiso,
+          descripcion: pJson['descripcion'],
+          lugares: lugaresDelPiso,
+        );
+      }).toList();
+
+      lugaresDisponibles.value = todosLugares;
+
+      print("Pisos procesados: ${pisos.length}");
+    } catch (e) {
+      print("Error en cargarPisosYLugares: $e");
+      // Datos de fallback
+      pisos.value = [
+        Piso(codigo: 'P1', descripcion: 'Piso 1 - Planta Baja', lugares: []),
+        Piso(codigo: 'P2', descripcion: 'Piso 2 - Primer Piso', lugares: []),
+      ];
+      lugaresDisponibles.value = [];
+    }
   }
 
   Future<void> seleccionarPiso(Piso piso) {
     pisoSeleccionado.value = piso;
     lugarSeleccionado.value = null;
-
-    // filtrar lugares de este piso
     lugaresDisponibles.refresh();
     return Future.value();
   }
@@ -65,18 +84,21 @@ class ReservaController extends GetxController {
     if (pisoSeleccionado.value == null ||
         lugarSeleccionado.value == null ||
         horarioInicio.value == null ||
-        horarioSalida.value == null) {
+        horarioSalida.value == null ||
+        autoSeleccionado.value == null) {
+      print("Faltan datos para confirmar reserva");
       return false;
     }
 
     final duracionEnHoras =
         horarioSalida.value!.difference(horarioInicio.value!).inMinutes / 60;
 
-    if (duracionEnHoras <= 0) return false;
+    if (duracionEnHoras <= 0) {
+      print("Duración inválida");
+      return false;
+    }
 
     final montoCalculado = (duracionEnHoras * 10000).roundToDouble();
-
-    if (autoSeleccionado.value == null) return false;
 
     final nuevaReserva = Reserva(
       codigoReserva: "RES-${DateTime.now().millisecondsSinceEpoch}",
@@ -85,28 +107,36 @@ class ReservaController extends GetxController {
       monto: montoCalculado,
       estadoReserva: "PENDIENTE",
       chapaAuto: autoSeleccionado.value!.chapa,
+      codigoLugar: lugarSeleccionado.value!.codigoLugar,
     );
 
     try {
-      // Guardar la reserva
-      final reservas = await db.getAll("reservas.json");
-      reservas.add(nuevaReserva.toJson());
-      await db.saveAll("reservas.json", reservas);
+      await db.add("reservas.json", nuevaReserva.toJson());
+      await actualizarEstadoLugar(
+          lugarSeleccionado.value!.codigoLugar, "RESERVADO");
+      await cargarPisosYLugares();
 
-      // Marcar el lugar como reservado
-      final lugares = await db.getAll("lugares.json");
-      final index = lugares.indexWhere(
-        (l) => l['codigoLugar'] == lugarSeleccionado.value!.codigoLugar,
-      );
-      if (index != -1) {
-        lugares[index]['estado'] = "RESERVADO";
-        await db.saveAll("lugares.json", lugares);
-      }
-
+      print("Reserva creada exitosamente: ${nuevaReserva.codigoReserva}");
       return true;
     } catch (e) {
       print("Error al guardar reserva: $e");
       return false;
+    }
+  }
+
+  Future<void> actualizarEstadoLugar(
+      String codigoLugar, String nuevoEstado) async {
+    try {
+      final lugares = await db.getAll("lugares.json");
+      final index = lugares.indexWhere((l) => l['codigoLugar'] == codigoLugar);
+
+      if (index != -1) {
+        lugares[index]['estado'] = nuevoEstado;
+        await db.saveAll("lugares.json", lugares);
+        print("Estado del lugar $codigoLugar actualizado a $nuevoEstado");
+      }
+    } catch (e) {
+      print("Error al actualizar estado del lugar: $e");
     }
   }
 
@@ -116,14 +146,31 @@ class ReservaController extends GetxController {
     horarioInicio.value = null;
     horarioSalida.value = null;
     duracionSeleccionada.value = 0;
+    autoSeleccionado.value = null;
   }
 
   Future<void> cargarAutosDelCliente() async {
-    final rawAutos = await db.getAll("autos.json");
-    final autos = rawAutos.map((e) => Auto.fromJson(e)).toList();
+    try {
+      final rawAutos = await db.getAll("autos.json");
+      final autos = rawAutos.map((e) => Auto.fromJson(e)).toList();
 
-    autosCliente.value =
-        autos.where((a) => a.clienteId == codigoClienteActual).toList();
+      autosCliente.value =
+          autos.where((a) => a.clienteId == codigoClienteActual).toList();
+
+      print("Autos del cliente cargados: ${autosCliente.length}");
+    } catch (e) {
+      print("Error al cargar autos: $e");
+      // Datos de fallback
+      autosCliente.value = [
+        Auto(
+          chapa: "ABC123",
+          marca: "Toyota",
+          modelo: "Corolla",
+          chasis: "CHX123456789",
+          clienteId: codigoClienteActual,
+        ),
+      ];
+    }
   }
 
   @override
