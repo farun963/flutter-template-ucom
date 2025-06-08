@@ -9,7 +9,7 @@ import 'package:finpay/view/home/transfer_screen.dart';
 import 'package:finpay/view/home/widget/circle_card.dart';
 import 'package:finpay/view/home/widget/custom_card.dart';
 import 'package:finpay/view/home/widget/transaction_list.dart';
-// NUEVOS IMPORTS PARA ESTACIONAMIENTO
+// IMPORTS PARA ESTACIONAMIENTO
 import 'package:finpay/view/reservas/reserva_screen.dart';
 import 'package:finpay/view/reservas/mis_reservas_screen.dart';
 import 'package:finpay/controller/pago_controller.dart';
@@ -192,6 +192,10 @@ class HomeView extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
+                // *** NUEVA SECCIÓN DE ESTADÍSTICAS DEL ESTACIONAMIENTO ***
+                _buildEstadisticasEstacionamiento(context),
+                const SizedBox(height: 20),
+
                 // SECCIÓN DE ACCIONES ORIGINALES
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -240,7 +244,7 @@ class HomeView extends StatelessWidget {
                   ],
                 ),
 
-                // *** NUEVA SECCIÓN DE ESTACIONAMIENTO AQUÍ ***
+                // SECCIÓN DE ESTACIONAMIENTO
                 const SizedBox(height: 30),
                 _buildEstacionamientoSection(context),
                 const SizedBox(height: 30),
@@ -325,8 +329,196 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // *** NUEVAS FUNCIONES PARA ESTACIONAMIENTO ***
+  // *** NUEVA SECCIÓN DE ESTADÍSTICAS ***
+  Widget _buildEstadisticasEstacionamiento(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.isLightTheme == false
+              ? const Color(0xff211F32)
+              : const Color(0xffFFFFFF),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xff000000).withOpacity(0.10),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header con botón de refresh
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Estadísticas del Estacionamiento",
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  Obx(() => GestureDetector(
+                        onTap: homeController.cargandoEstadisticas.value
+                            ? null
+                            : () => homeController.refrescarEstadisticas(),
+                        child: Icon(
+                          Icons.refresh,
+                          color: homeController.cargandoEstadisticas.value
+                              ? Colors.grey
+                              : HexColor(AppTheme.primaryColorString!),
+                          size: 20,
+                        ),
+                      )),
+                ],
+              ),
+              const SizedBox(height: 16),
 
+              // Estadísticas en tres columnas
+              Obx(() {
+                if (homeController.cargandoEstadisticas.value) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  );
+                }
+
+                return Row(
+                  children: [
+                    // Pagos del mes
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        icon: Icons.payment,
+                        iconColor: Colors.green,
+                        backgroundColor: Colors.green.withOpacity(0.1),
+                        title: "Pagos ${homeController.obtenerMesActual()}",
+                        value: homeController.pagosDelMes.value.toString(),
+                        subtitle: homeController.obtenerTextoPagosDelMes(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Pagos pendientes
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        icon: Icons.pending_actions,
+                        iconColor: Colors.orange,
+                        backgroundColor: Colors.orange.withOpacity(0.1),
+                        title: "Pendientes",
+                        value: homeController.pagosPendientes.value.toString(),
+                        subtitle: homeController.obtenerTextoPagosPendientes(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Total autos
+                    Expanded(
+                      child: _buildStatCard(
+                        context,
+                        icon: Icons.directions_car,
+                        iconColor: Colors.blue,
+                        backgroundColor: Colors.blue.withOpacity(0.1),
+                        title: "Mis Autos",
+                        value: homeController.totalAutos.value.toString(),
+                        subtitle: homeController.obtenerTextoAutos(),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required Color backgroundColor,
+    required String title,
+    required String value,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.isLightTheme == false
+            ? const Color(0xff15141F)
+            : const Color(0xffF8F9FA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: iconColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Ícono con fondo
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Valor principal
+          Text(
+            value,
+            style: TextStyle(
+              color: iconColor,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+
+          // Título
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).textTheme.bodySmall!.color,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+
+          // Subtítulo
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Theme.of(context).textTheme.bodySmall!.color,
+                  fontSize: 9,
+                ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // FUNCIÓN DE ESTACIONAMIENTO EXISTENTE
   Widget _buildEstacionamientoSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
